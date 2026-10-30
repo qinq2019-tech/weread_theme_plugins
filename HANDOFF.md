@@ -1,7 +1,7 @@
 # 交接记录（Handoff）
 
 > 更新时间：2026-10-30 16:00 · 版本 v0.2.0
-> 新开对话继续时，先读这份文件，再读 README.md。
+> **跨平台 / 新会话接手先读 `PROJECT-STATUS.md`（现状总览与推进顺序）**，本文件是踩坑档案与决策细节，两者不重复：总览看那份，细节看这份。
 
 ## 一句话状态
 
@@ -40,6 +40,7 @@ weread-studio/
 ├─ docs/
 │  └─ v0.2-design.md      v0.2 规格唯一来源：视觉方向（§1-11）+ 交互规格（摘录管理）
 ├─ README.md              安装、架构决策、验收清单、边界
+├─ PROJECT-STATUS.md      跨平台交接总览：现状 / 卡点 / 下一步 / 接手步骤（新会话入口）
 ├─ HANDOFF.md             本文件
 ├─ tools/
 │  ├─ smoke-test.js       DOM 桩冒烟：首页 / 专属区三套 / 阅读器 / 陌生页 / 还原
@@ -90,7 +91,7 @@ weread-studio/
 
 ## 已验证 / 未验证
 
-**已验证（v0.2）**：全部 JS 语法；`tools/smoke-test.js`（含专属区三套场景）全过；`tools/quote-test.js` 31 项全过；`tools/options-test.js` 31 项全过；`preview.html` 五张截图（paper/gallery/pastel 浅色 + gallery/pastel 深色）逐张核对，修掉三处视觉缺陷（见关键事实 8/11/12）。
+**已验证（v0.2）**：全部 JS 语法；`tools/smoke-test.js`（含专属区三套场景）28 条全过；`tools/quote-test.js` 30 条全过；`tools/options-test.js` 30 条全过（合计 88 条）；`preview.html` 五张截图（paper/gallery/pastel 浅色 + gallery/pastel 深色）逐张核对，修掉三处视觉缺陷（见关键事实 9 / 12 / 13）。
 
 **v0.1 基线已验证**：`tools/live-check.js` 在真实首页与阅读器注入 0 报错，书桌/功能坞正确挂载，沉浸命中 `.readerTopBar` 与 `.readerControls`，色温层生效。
 
