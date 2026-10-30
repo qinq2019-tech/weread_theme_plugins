@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "微信读书 · 书房",
+  "version": "0.2.0",
+  "description": "给微信读书网页版加一张自己的书桌：主题化界面、继续阅读、摘录与阅读目标。数据只存在本机。",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "微信读书 · 书房",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "options_page": "src/options/options.html",
+  "permissions": ["storage"],
+  "host_permissions": ["https://weread.qq.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://weread.qq.com/*"],
+      "css": ["src/content/page-theme.css"],
+      "js": [
+        "src/shared/defaults.js",
+        "src/shared/palette.js",
+        "src/content/00-core.js",
+        "src/content/05-ui-css.js",
+        "src/content/10-adapter.js",
+        "src/content/20-theme.js",
+        "src/content/30-desk.js",
+        "src/content/35-wing.js",
+        "src/content/40-dock.js",
+        "src/content/50-reader.js",
+        "src/content/60-boot.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+/*
+ * 微信读书 · 书房｜页面级样式（注入到站点页面本身，不是 Shadow DOM）
+ *
+ * 两条约束，都是为了「不弄坏页面」：
+ * 1. 只做视觉层：背景、字体气质、圆角、阴影。不改宽高、不改定位、不隐藏站点内容。
+ * 2. 会影响到文字可读性的规则（底色、字色）只在 html[data-rk-theme-match="1"] 时生效，
+ *    即扩展主题的明暗和站点自身明暗一致时；不一致就只改结构质感，避免浅字压浅底。
+ *
+ * 选择器说明（2026-10-30 线上实测）：
+ *   现行首页用不带哈希的语义类：.home_page_container / .ranking_block_* / .wr_bookCover
+ *   旧版 Nuxt 的 .wr_index_page_* 已消失，这里保留少量作为兼容，不影响新版本。
+ *
+ * 全部规则都以 html[data-rk-on="1"] 为前缀：关掉扩展时属性被移除，页面立刻回到原样。
+ */
+
+/* ---------------- 画布（仅明暗一致时覆盖） ---------------- */
+
+html[data-rk-theme-match='1'] body {
+  background-color: var(--rk-canvas) !important;
+  background-image: radial-gradient(1100px 380px at 18% -8%, var(--rk-accent-soft), transparent 72%) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+/* 阅读器：不铺渐变，正文是 canvas，底色只做外围 */
+html[data-rk-theme-match='1'] body.wr_page_reader {
+  background-image: none !important;
+}
+
+/* ---------------- 字体气质（与配色无关，始终生效） ---------------- */
+
+html[data-rk-on='1'] .ranking_block_title,
+html[data-rk-on='1'] .home_page_container h2,
+html[data-rk-on='1'] .wr_index_page_top_section_header_title_lang,
+html[data-rk-on='1'] .wr_index_page_rank_list_title,
+html[data-rk-on='1'] .wr_index_page_category_list_title_lang {
+  font-family: var(--rk-font-serif) !important;
+  letter-spacing: 0.01em;
+}
+
+html[data-rk-on='1'] .wr_index_page_mini_bookInfo_content_title_name {
+  font-family: var(--rk-font-serif);
+}
+
+/* ---------------- 质感（结构层，始终生效） ---------------- */
+
+/* 封面：统一小圆角与书脊投影，是这套视觉里最有效的「变好看」杠杆 */
+html[data-rk-on='1'] .wr_bookCover,
+html[data-rk-on='1'] .wr_index_page_mini_bookInfo_cover_wrapper {
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+/* 榜单里的单个书条目：悬停轻微上浮 */
+html[data-rk-on='1'] .ranking_block_book {
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+html[data-rk-on='1'] .ranking_block_book:hover {
+  transform: translateY(-2px);
+}
+
+html[data-rk-on='1'] .wr_index_page_rank_list_card,
+html[data-rk-on='1'] .wr_index_page_category_list_content_card {
+  border-radius: 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+html[data-rk-on='1'] .wr_index_page_rank_list_card:hover,
+html[data-rk-on='1'] .wr_index_page_category_list_content_card:hover {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+html[data-rk-on='1'] .wr_index_page_search_bar_wrapper {
+  border-radius: 999px !important;
+}
+
+/* ---------------- 配色（仅明暗一致时生效） ---------------- */
+
+html[data-rk-theme-match='1'] .ranking_block_title,
+html[data-rk-theme-match='1'] .wr_index_page_top_section_header_title_lang,
+html[data-rk-theme-match='1'] .wr_index_page_rank_list_title,
+html[data-rk-theme-match='1'] .wr_index_page_category_list_title_lang,
+html[data-rk-theme-match='1'] .wr_index_page_mini_bookInfo_content_title_name {
+  color: var(--rk-ink);
+}
+
+html[data-rk-theme-match='1'] .wr_index_page_mini_bookInfo_content_author {
+  color: var(--rk-ink-soft);
+}
+
+html[data-rk-theme-match='1'] .wr_index_page_rank_list_card,
+html[data-rk-theme-match='1'] .wr_index_page_category_list_content_card {
+  background: var(--rk-surface);
+}
+
+html[data-rk-theme-match='1'] .wr_index_page_search_bar_wrapper {
+  background: var(--rk-surface) !important;
+  border: 1px solid var(--rk-line) !important;
+}
+
+html[data-rk-theme-match='1'] .wr_index_page_search_bar_input {
+  color: var(--rk-ink) !important;
+}
+
+/* ---------------- 沉浸模式 ---------------- */
+
+/* 只对适配层确认命中的元素生效（data-rk-imm 由 50-reader.js 打标） */
+html[data-rk-immersive='1'] [data-rk-imm='1'] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s ease;
+}
+
+html[data-rk-immersive='1'] body {
+  scrollbar-width: none;
+}
+
+html[data-rk-immersive='1'] body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* 我们自己的浮层永远可用，避免沉浸后无路可退 */
+html[data-rk-on='1'] [data-rk-dock],
+html[data-rk-on='1'] [data-rk-dock] * {
+  opacity: 1 !important;
+}
+
+/* ---------------- 无障碍 ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-rk-on='1'] .ranking_block_book,
+  html[data-rk-on='1'] .wr_index_page_rank_list_card,
+  html[data-rk-on='1'] .wr_index_page_category_list_content_card {
+    transition: none;
+  }
+}

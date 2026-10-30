@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>微信读书 · 书房｜设置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <img class="logo" src="../../icons/icon48.png" alt="">
+      <div>
+        <h1>微信读书 · 书房</h1>
+        <p class="sub">把网页版微信读书变成你自己的书桌。所有数据只存在这台电脑上。</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>主题</h2>
+      <p class="hint">三套取向，切换后立即生效；在微信读书页面刷新一下就能看到。</p>
+      <div class="themes" id="themes"></div>
+    </section>
+
+    <section class="card">
+      <h2>外观</h2>
+      <div class="field">
+        <span class="field-label">明暗</span>
+        <div class="seg" id="mode"></div>
+      </div>
+      <div class="field">
+        <span class="field-label">字体</span>
+        <div class="seg" id="font"></div>
+      </div>
+      <div class="field">
+        <span class="field-label">留白</span>
+        <div class="seg" id="density"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>显示内容</h2>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-title">首页书桌</div>
+          <div class="toggle-desc">在首页顶部显示问候、继续阅读、今日目标与最近一句摘录。</div>
+        </div>
+        <button class="switch" id="sw-showDesk" role="switch" type="button"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-title">悬浮功能坞</div>
+          <div class="toggle-desc">右下角圆钮，随时换主题、写摘录、恢复原版。</div>
+        </div>
+        <button class="switch" id="sw-showDock" role="switch" type="button"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-title">记录阅读时长</div>
+          <div class="toggle-desc">只统计你在电脑浏览器里的停留时间，用于首页目标环，不上传。</div>
+        </div>
+        <button class="switch" id="sw-logReading" role="switch" type="button"><i></i></button>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-title">沉浸阅读</div>
+          <div class="toggle-desc">隐藏阅读器顶栏与底栏（能识别到才生效），隐藏滚动条。随时用右下角圆钮退出。</div>
+        </div>
+        <button class="switch" id="sw-immersive" role="switch" type="button"><i></i></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>每日目标</h2>
+      <p class="hint">目标只用于首页的进度环，不做提醒。</p>
+      <div class="field">
+        <span class="field-label">每天</span>
+        <div class="goal-row">
+          <input type="range" id="goal" min="10" max="180" step="5">
+          <output id="goalOut">30 分钟</output>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="quoteCard">
+      <h2 id="quoteTitle" tabindex="-1">摘录</h2>
+
+      <!-- 空态：只有这一句，无 toolbar / 无列表 / 无 foot -->
+      <p class="quote-empty" id="quoteEmpty" hidden>还没留下句子。在微信读书页面右下角的圆钮里写一句，它就排在这里。</p>
+
+      <!-- 有数据态 -->
+      <p class="hint" id="quoteHint">最近留下的在最前；同一本书的句子会归到一组。</p>
+
+      <div class="quote-toolbar" id="quoteToolbar">
+        <div class="seg" id="quoteView"></div>
+        <button class="btn ghost" id="quoteExport" type="button">导出 Markdown</button>
+      </div>
+
+      <!-- 列表：按书视图一组一个 section，按时间视图一个 ul，由 options.js 渲染 -->
+      <div id="quoteBody"></div>
+
+      <!-- 撤销条：常驻节点（role=status 必须一开始就在 DOM 里，后插入的读屏不播报） -->
+      <p class="quote-undo" id="quoteUndo" role="status" hidden></p>
+
+      <!-- 计数行：常驻，让 200 条上限成为可见事实 -->
+      <p class="quote-foot" id="quoteFoot"></p>
+    </section>
+
+    <section class="card">
+      <h2>我的数据</h2>
+      <div class="stats" id="stats"></div>
+      <div class="actions">
+        <button class="btn" id="export">导出备份</button>
+        <label class="btn ghost" for="import">导入备份</label>
+        <input type="file" id="import" accept="application/json" hidden>
+        <button class="btn ghost danger" id="clear">清空数据</button>
+      </div>
+      <p class="hint" id="dataHint">数据存放在浏览器扩展存储中，卸载扩展会一并删除。</p>
+    </section>
+
+    <section class="card about">
+      <h2>边界说明</h2>
+      <ul>
+        <li>只修页面外观、增加自己的组件；不改动微信读书的登录、搜索、阅读与购买流程。</li>
+        <li>不请求微信读书非公开接口，不绕过付费与会员限制，不批量抓取书籍内容。</li>
+        <li>阅读时长是本机估算，不等于微信读书账号在其它设备上的官方统计。</li>
+        <li>站点改版可能让某些增强失效；此时可点右下角圆钮「恢复原版」立即还原。</li>
+      </ul>
+      <p class="version" id="version"></p>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="../shared/defaults.js"></script>
+  <script src="../shared/palette.js"></script>
+  <script src="../shared/quotes.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

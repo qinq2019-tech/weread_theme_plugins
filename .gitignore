@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# 依赖（本项目无第三方依赖，留作后续）
+node_modules/
+
+# 本地日志与临时产物
+*.log
+*.zip
+/dist/
+/tmp/

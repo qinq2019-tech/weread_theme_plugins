@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>微信读书 · 书房</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="head">
+    <img src="../../icons/icon48.png" alt="">
+    <div class="titles">
+      <div class="name">微信读书 · 书房</div>
+      <div class="ver" id="ver">v0.1.0</div>
+    </div>
+    <button class="switch" id="power" role="switch" type="button" aria-label="总开关"><i></i></button>
+  </header>
+
+  <section class="block">
+    <div class="block-label">主题</div>
+    <div class="themes" id="themes"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-label">当前页面</div>
+    <div class="diag" id="diag">未检测</div>
+    <button class="btn ghost small" id="check" type="button">重新检测适配</button>
+  </section>
+
+  <footer class="foot">
+    <button class="btn" id="options" type="button">打开完整设置</button>
+  </footer>
+
+  <script src="../shared/defaults.js"></script>
+  <script src="../shared/palette.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
