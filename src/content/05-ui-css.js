@@ -76,6 +76,9 @@
     '  color:var(--rk-ink);',
     '}',
     '.rk-date{margin:6px 0 0;font-size:12px;color:var(--rk-ink-soft);letter-spacing:.02em;}',
+    /* 替换式挂载时保留下来的原生「查看全部 · N 个」入口（2026-11-02） */
+    '.rk-desk-head-link{flex:0 0 auto;margin-top:9px;font-size:11.5px;color:var(--rk-ink-soft);text-decoration:none;letter-spacing:.02em;white-space:nowrap;}',
+    '.rk-desk-head-link:hover{color:var(--rk-accent);text-decoration:underline;text-underline-offset:3px;}',
 
     /* 继续阅读 */
     '.rk-continue{',
@@ -223,7 +226,7 @@
     '.rk-wing-title{margin:0;font-family:var(--rk-font-serif);font-size:17px;font-weight:600;line-height:1.3;letter-spacing:.01em;color:var(--rk-ink);}',
     '.rk-wing-sub{font-size:11.5px;color:var(--rk-ink-soft);letter-spacing:.02em;line-height:1.6;}',
     '.rk-wing-body{margin-top:18px;}',
-    '.rk-wing-note{font-size:10.5px;color:var(--rk-ink-soft);line-height:1.6;letter-spacing:.02em;}',
+    '.rk-wing-note{font-size:11.5px;color:var(--rk-ink-soft);line-height:1.7;letter-spacing:.02em;}',
 
     /* ---- paper · 摘句墙（便笺无框无底色；书签是本区唯一带面的小块） ---- */
     '.rk-wing[data-wing-theme="paper"] .rk-wing-body{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:36px;}',
@@ -256,28 +259,18 @@
     '  .rk-bookmark-progress{display:none;}',
     '}',
 
-    /* ---- gallery · 墙上的书（书脊等高不等宽：等宽+高跳变=柱状图） ---- */
-    '.rk-wing[data-wing-theme="gallery"] .rk-wing-body{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:36px;align-items:stretch;}',
+    /* ---- gallery · 墙上的书（书脊等高不等宽：等宽+高跳变=柱状图） ----
+     * 2026-11-02 起不再渲染题签卡片（继续阅读全局只在书桌出现一次），书脊墙独占整行。
+     */
+    '.rk-wing[data-wing-theme="gallery"] .rk-wing-body{display:block;}',
     '.rk-spine-wall{display:flex;align-items:flex-end;gap:2px;height:168px;border-bottom:1px solid var(--rk-line);min-width:0;}',
     '.rk-spine{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 auto;border-radius:2px 2px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:var(--rk-ink);text-decoration:none;transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s ease;}',
     '.rk-wing[data-mode="dark"] .rk-spine{box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}',
     '.rk-spine[data-linked="1"]:hover{transform:translateY(-6px);box-shadow:var(--rk-shadow-soft);z-index:2;}',
     '.rk-spine[data-linked="0"]{cursor:default;}',
     '.rk-spine-label{writing-mode:vertical-rl;font-family:var(--rk-font-serif);font-size:10.5px;font-weight:400;letter-spacing:.04em;line-height:1.2;color:var(--rk-ink);max-height:calc(100% - 24px);overflow:hidden;}',
-    '.rk-spine-empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--rk-ink-soft);letter-spacing:.02em;}',
-    '.rk-plate{height:168px;background:var(--rk-surface);border:1px solid var(--rk-line);border-radius:10px;padding:15px 14px;box-shadow:var(--rk-shadow-soft);display:flex;flex-direction:column;min-width:0;}',
-    '.rk-plate-title{font-family:var(--rk-font-serif);font-size:15px;font-weight:600;line-height:1.35;letter-spacing:.01em;color:var(--rk-ink);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}',
-    '.rk-plate-author{margin-top:4px;font-size:11.5px;color:var(--rk-ink-soft);}',
-    '.rk-plate-foot{margin-top:auto;}',
-    '.rk-plate-progress{height:3px;border-radius:2px;background:var(--rk-line);overflow:hidden;}',
-    '.rk-plate-progress i{display:block;height:100%;background:var(--rk-accent);border-radius:2px;}',
-    '.rk-plate-pct{margin-top:6px;font-size:11px;color:var(--rk-ink-soft);}',
-    '.rk-plate-link{display:inline-block;margin-top:8px;font-size:11.5px;color:var(--rk-ink-soft);text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;}',
-    '.rk-plate-link:hover{color:var(--rk-accent);text-decoration:underline;text-underline-offset:3px;}',
     '@media (max-width:999px){',
-    '  .rk-wing[data-wing-theme="gallery"] .rk-wing-body{grid-template-columns:minmax(0,1fr);gap:18px;}',
     '  .rk-spine-wall{height:132px;}',
-    '  .rk-plate{height:auto;min-height:120px;}',
     '}',
 
     /* ---- pastel · 读过的日子（0 档空心圈：洞和点是两种语义） ---- */

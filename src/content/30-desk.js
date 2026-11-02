@@ -1,8 +1,11 @@
 /*
  * 微信读书 · 书房｜首页「我的书桌」
  *
- * 这是「让页面更丰富」的主承载：插在首页内容区最上方的一条书桌。
- * 内容 = 问候 + 继续阅读 + 今日目标 + 一句摘录。
+ * 这是「让页面更丰富」的主承载。
+ * 挂载方式（2026-11-02 起，替换式）：登录态首页命中原生「继续阅读」分区时，
+ * 书桌原地替换该分区——位置与宽度自动继承原生栅格，原生内容不被下推；
+ * 原生分区的「查看全部 · N 个」入口保留为书桌头部的小链接。
+ * 其它首页结构回退为插在内容区最前（旧行为）。
  *
  * 关键决策：
  * 1. 全部渲染在 Shadow DOM 里。站点是 Nuxt + Vue，全局样式和 class 名都很容易打架，
@@ -10,6 +13,7 @@
  * 2. 只读本机记录：继续阅读来自本机阅读日志（用户在阅读器停留时记录的书名/章节），
  *    封面借用当前页面已经渲染好的图片，不请求任何接口。
  * 3. 挂载点找不到就安静降级（只在控制台留诊断信息），不硬塞到不确定的位置。
+ * 4. 卸载时把被替换的原生分区放回原位——「干净还原」是铁律。
  */
 (function () {
   'use strict';
@@ -19,6 +23,11 @@
 
   var HOST_ATTR = 'data-rk-desk';
   var MOUNTED = null;
+  // 替换式挂载（2026-11-02 起）：书桌原地顶掉原生「继续阅读」分区。
+  // NATIVE 记住被摘下的原生节点，卸载时放回原位，保证「关掉开关干净还原」。
+  var NATIVE = null;
+  // 锚点附属信息（「查看全部」入口），refresh 重建时还要用
+  var ANCHOR_INFO = null;
 
   var RING_R = 23;
   var RING_C = 2 * Math.PI * RING_R;
@@ -169,6 +178,14 @@
           RK.h('div', { class: 'rk-date', text: dateLine() })
         ])
       ]);
+      // 替换式挂载时保留原分区标题行的「查看全部 · N 个」入口（站点没给链接就不渲染）
+      if (ANCHOR_INFO && ANCHOR_INFO.allHref && ANCHOR_INFO.allLabel) {
+        head.appendChild(RK.h('a', {
+          class: 'rk-desk-head-link',
+          text: ANCHOR_INFO.allLabel,
+          attrs: { href: ANCHOR_INFO.allHref, title: ANCHOR_INFO.allLabel }
+        }));
+      }
       main.appendChild(head);
     }
 
@@ -240,8 +257,8 @@
     if (MOUNTED && document.contains(MOUNTED)) return MOUNTED;
     if (!RK.lock('desk')) return MOUNTED;
 
-    var host = RK.adapter.deskHost();
-    if (!host) {
+    var anchor = RK.adapter.deskAnchor();
+    if (!anchor) {
       RK.warn('未找到首页内容区，书桌不挂载（可用设置页诊断查看）');
       RK.unlock('desk');
       return null;
@@ -250,7 +267,25 @@
     var el = document.createElement('div');
     el.setAttribute(HOST_ATTR, '1');
     // 宿主的布局用内联样式，避免依赖样式表注入顺序（Shadow 内选不到宿主）
-    el.style.cssText = 'display:block;position:relative;margin:0;padding:0;';
+
+    if (anchor.mode === 'replace') {
+      // 原地替换：书桌占住原生分区的位置，宽度与偏移自动继承；
+      // 再抄一份原生节点的外距，双保险对齐原生栅格。
+      NATIVE = anchor.node;
+      ANCHOR_INFO = anchor;
+      var margin = '';
+      try {
+        var m = getComputedStyle(NATIVE).margin;
+        if (m && m !== '0px') margin = 'margin:' + m + ';';
+      } catch (e) {}
+      el.style.cssText = 'display:block;position:relative;' + margin;
+      NATIVE.parentNode.insertBefore(el, NATIVE);
+      NATIVE.parentNode.removeChild(NATIVE);
+    } else {
+      ANCHOR_INFO = anchor;
+      el.style.cssText = 'display:block;position:relative;margin:0;padding:0;';
+      anchor.node.insertBefore(el, anchor.node.firstChild);
+    }
 
     var shadow = el.attachShadow({ mode: 'open' });
     var style = document.createElement('style');
@@ -262,16 +297,25 @@
     box.data = data;
     shadow.appendChild(box);
 
-    host.node.insertBefore(el, host.node.firstChild);
     MOUNTED = el;
     RK.unlock('desk');
-    RK.log('书桌已挂载 →', host.selector);
+    RK.log('书桌已挂载（' + anchor.mode + ' → ' + anchor.selector + '）');
     return el;
   }
 
   function unmount() {
-    if (MOUNTED && MOUNTED.parentNode) MOUNTED.parentNode.removeChild(MOUNTED);
+    if (MOUNTED && MOUNTED.parentNode) {
+      var parent = MOUNTED.parentNode;
+      // 替换式：先把原生分区放回书桌的位置再撤书桌，页面恢复原样。
+      // 若站点已自行重渲染（NATIVE 不在文档里且已被替换）就直接撤，避免插回过期节点。
+      if (NATIVE && !document.contains(NATIVE) && !parent.contains(NATIVE)) {
+        parent.insertBefore(NATIVE, MOUNTED);
+      }
+      parent.removeChild(MOUNTED);
+    }
     MOUNTED = null;
+    NATIVE = null;
+    ANCHOR_INFO = null;
   }
 
   // 数据变化时只重绘内容，不动宿主节点，避免页面滚动位置跳动

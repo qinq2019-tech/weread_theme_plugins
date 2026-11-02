@@ -54,6 +54,8 @@
   .eyebrow{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
   .greet{margin:7px 0 0;font-family:var(--font-serif);font-size:27px;line-height:1.24;font-weight:600}
   .date{margin:6px 0 0;font-size:12px;color:var(--ink-soft)}
+  .desk-link{flex:0 0 auto;margin-top:9px;font-size:11.5px;color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+  .desk-link:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
   .main{display:flex;flex-direction:column;gap:18px;min-width:0}
   .cont{display:flex;gap:14px;align-items:center;padding:12px;border-radius:14px;
     background:var(--surface);border:1px solid var(--line);text-decoration:none;color:inherit}
@@ -159,20 +161,12 @@
   .bmark .bp{position:absolute;bottom:10px;left:12px;right:12px;height:2px;background:var(--line);border-radius:1px}
   .bmark .bp i{display:block;height:100%;background:var(--accent);border-radius:1px}
 
-  /* gallery · 墙上的书 */
-  body[data-theme="gallery"] .wing-body.wv-gallery{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:36px;align-items:stretch}
+  /* gallery · 墙上的书（2026-11-02 起不再渲染题签，书脊墙独占整行） */
+  body[data-theme="gallery"] .wing-body.wv-gallery{display:block}
   .spine-wall{display:flex;align-items:flex-end;gap:2px;height:168px;border-bottom:1px solid var(--line);min-width:0}
   .spine{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 auto;border-radius:2px 2px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
   body[data-mode="dark"] .spine{box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
   .spine span{writing-mode:vertical-rl;font-family:var(--font-serif);font-size:10.5px;letter-spacing:.04em;line-height:1.2;max-height:calc(100% - 24px);overflow:hidden;color:var(--ink)}
-  .plate{height:168px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:15px 14px;box-shadow:var(--shadow-soft);display:flex;flex-direction:column;min-width:0}
-  .plate-title{font-family:var(--font-serif);font-size:15px;font-weight:600;line-height:1.35;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .plate-author{margin-top:4px;font-size:11.5px;color:var(--ink-soft)}
-  .plate-foot{margin-top:auto}
-  .plate-bar{height:3px;border-radius:2px;background:var(--line);overflow:hidden}
-  .plate-bar i{display:block;height:100%;background:var(--accent)}
-  .plate-pct{margin-top:6px;font-size:11px;color:var(--ink-soft)}
-  .plate-link{display:inline-block;margin-top:8px;font-size:11.5px;color:var(--ink-soft)}
 
   /* pastel · 读过的日子 */
   body[data-theme="pastel"] .wing-body.wv-pastel{display:grid;grid-template-columns:168px minmax(0,1fr);align-items:center}
@@ -215,10 +209,14 @@
     <section class="desk">
       <div class="desk-in">
         <div class="main">
-          <div>
-            <div class="eyebrow">我的书桌</div>
-            <h1 class="greet">下午好，读点什么？</h1>
-            <div class="date">10 月 30 日 · 周五</div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+            <div>
+              <div class="eyebrow">我的书桌</div>
+              <h1 class="greet">下午好，读点什么？</h1>
+              <div class="date">10 月 30 日 · 周五</div>
+            </div>
+            <!-- 替换式挂载保留下来的原生「查看全部 · N 个」入口 -->
+            <a class="desk-link" href="#">查看全部 · 22 个</a>
           </div>
           <div class="cont">
             <div class="cover"><i></i></div>
@@ -293,19 +291,9 @@
         </div>
       </div>
 
-      <!-- gallery · 墙上的书 -->
+      <!-- gallery · 墙上的书（不再渲染题签：继续阅读全局只在书桌出现一次） -->
       <div class="wing-body wv wv-gallery">
         <div class="spine-wall" id="spineWall"></div>
-        <div class="plate">
-          <div class="eyebrow">最近在读</div>
-          <div class="plate-title">长安的荔枝</div>
-          <div class="plate-author">马伯庸</div>
-          <div class="plate-foot">
-            <div class="plate-bar"><i style="width:28%"></i></div>
-            <div class="plate-pct">28%</div>
-            <div class="plate-link">继续读 →</div>
-          </div>
-        </div>
       </div>
 
       <!-- pastel · 读过的日子 -->

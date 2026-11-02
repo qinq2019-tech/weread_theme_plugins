@@ -1,11 +1,11 @@
 # 交接记录（Handoff）
 
-> 更新时间：2026-10-30 16:00 · 版本 v0.2.0
+> 更新时间：2026-11-02 11:40 · 版本 v0.3.0
 > **跨平台 / 新会话接手先读 `PROJECT-STATUS.md`（现状总览与推进顺序）**，本文件是踩坑档案与决策细节，两者不重复：总览看那份，细节看这份。
 
 ## 一句话状态
 
-v0.2.0 完成：三套主题各有了专属内容区（paper 摘句墙 / gallery 墙上的书 / pastel 读过的日子），摘录可管理（按书归档、就地编辑、删除可撤销、导出 Markdown）。三套自动化测试全绿；专属区已用静态预览截图核对过三主题×明暗，**但未在登录后的真实页面上实测**。审美方向已确认「对味」。
+v0.3.0 完成：针对登录态真机反馈的「组件堆积混乱」，书桌改为**替换式挂载**（原地顶掉原生「继续阅读」分区，等宽等位、卸载还原）、画廊题签删除（继续阅读全局只在书桌出现一次）、三套专属区空态降级（数据不足收缩为一行轻提示）。三套自动化测试 97 项全绿；`preview.html` 已同步。**待登录态真机复核**（重点：替换落位、「查看全部」链接、恢复原版后原生分区复位）。
 
 ---
 
@@ -27,7 +27,9 @@ v0.2.0 完成：三套主题各有了专属内容区（paper 摘句墙 / gallery
 
 ## 已交付内容
 
-**v0.2 新增**：主题专属区（书桌下方独立一条，`deskModules.wingPaper/wingGallery/wingTime` 三个独立开关，只渲染当前主题对应的那一个，关闭后连宿主都不留）；摘录管理设置页卡片（按书/按时间视图、就地编辑、删除 8 秒撤销、全部/单本导出 Markdown）；功能坞「管理摘录」入口（`rk:open-options` 带 `#quotes` hash 直达）；新令牌 7 个（heat1-3 / spine1-3 / shadowSoft，三主题×明暗共 42 值）。
+**v0.3 新增**（登录态真机反馈修复）：书桌替换式挂载（`10-adapter.js` 新增 `deskAnchor()`：登录态首页返回 replace 模式锚点，其它结构回退 prepend；`30-desk.js` 原地顶掉 `.wr_index_page_top_section_wrapper`、抄原生 margin、卸载时把原生节点放回原位）；书桌头部保留原生「查看全部 · N 个」入口（href 现场提取，站点不给就不渲染）；画廊题签（.rk-plate）整体删除——继续阅读全局只在书桌出现一次；三套专属区空态降级（在读 < 3 本 / 无摘录且在读不足 / 有记录天数 < 3 → 一行 `rk-wing-note` 轻提示，不再撑骨架）；新增 `tools/dump-home.js` 与 `tools/dump-home-2.js`（登录态 Console 侦察脚本，只读）。
+
+**v0.2 已有**：主题专属区（书桌下方独立一条，`deskModules.wingPaper/wingGallery/wingTime` 三个独立开关，只渲染当前主题对应的那一个，关闭后连宿主都不留）；摘录管理设置页卡片（按书/按时间视图、就地编辑、删除 8 秒撤销、全部/单本导出 Markdown）；功能坞「管理摘录」入口（`rk:open-options` 带 `#quotes` hash 直达）；新令牌 7 个（heat1-3 / spine1-3 / shadowSoft，三主题×明暗共 42 值）。
 
 **v0.1 已有**：首页「我的书桌」（问候 / 继续阅读 / 今日目标环 / 最近摘录）、右下角功能坞（主题 / 明暗 / 字体 / 留白 / 摘录 / 色温 / 沉浸 / 恢复原版）、设置页（预览 + 开关 + 目标 + 数据导入导出清空）、弹窗（总开关 + 主题 + 页面适配诊断）、阅读器（色温层 / 顶底栏隐藏 / 阅读记录）、SW 按 tabId 去重聚合阅读时长。
 
@@ -43,10 +45,12 @@ weread-studio/
 ├─ PROJECT-STATUS.md      跨平台交接总览：现状 / 卡点 / 下一步 / 接手步骤（新会话入口）
 ├─ HANDOFF.md             本文件
 ├─ tools/
-│  ├─ smoke-test.js       DOM 桩冒烟：首页 / 专属区三套 / 阅读器 / 陌生页 / 还原
+│  ├─ smoke-test.js       DOM 桩冒烟：首页 / 替换式挂载与还原 / 专属区三套 + 空态 / 阅读器 / 陌生页 / 还原
 │  ├─ quote-test.js       摘录纯函数层测试（借用规则 / Markdown 逐条规则）
 │  ├─ options-test.js     设置页行为测试（分组 / 删除撤销 / 导出捕获 / 编辑 / 同步）
-│  └─ live-check.js       CDP 驱动 headless Chrome 注入真实页面
+│  ├─ live-check.js       CDP 驱动 headless Chrome 注入真实页面（未登录）
+│  ├─ dump-home.js        登录态首页结构侦察 · 第一段（Console 粘贴，只读）
+│  └─ dump-home-2.js      登录态首页结构侦察 · 第二段（分区清单 / 继续阅读分区内部）
 ├─ icons/                 16/48/128 图标 + 生成脚本
 └─ src/
    ├─ shared/defaults.js  默认设置（含 deskModules 三 个 wing 开关）
@@ -86,16 +90,21 @@ weread-studio/
 13. **preview.html 与 05-ui-css.js 是两份手工联动副本**；且预览的变体显示规则要把 display 和栅格写进同一条主题条件规则（`body[data-theme="x"] .wing-body.wv-x{display:grid;...}`），否则 `display:grid` 的无条件规则会压过 `.wv{display:none}`，三套同屏。
 14. **设置页编辑摘录期间绝不调全量 `render()`**——它会把编辑中的 textarea 整个换掉；只调 `renderQuotes()` + `renderStats()`，且 `storage.onChanged` 在 `editingId` 非空时跳过重绘。
 15. **撤销条必须是常驻 `role="status"` 节点**（options.html 里预先写好、初始 hidden）；删除时才 createElement 插入的 live region 读屏经常不播报。
+16. **登录态首页与未登录首页是两套结构**（2026-11-02 实测，v0.2 真机翻车的根因）：登录后 `weread.qq.com/` 根路径是 `.wr_index_page_*`（此前以为已消失的"旧版"结构——当时测的是未登录 `/web/` 的 `.home_page_container` 新结构，两套都活着）。登录态首页的内容区**只有一个主体分区**：`.wr_index_page_top_section_wrapper`（标题行「继续阅读 + 查看全部·N 个」+ 22 张分类卡 562px 宽单列）。此前把书桌+专属区 prepend 进去，等于在原生主体前叠了两条全宽横幅——这就是「一片乱码」的来源。v0.3 起书桌对该分区做替换式挂载。
+17. **替换式挂载的还原必须先插回再移除**：`unmount()` 先 `parent.insertBefore(NATIVE, MOUNTED)` 再 `removeChild(MOUNTED)`；且要判断 NATIVE 是否已被站点自行重渲染（`document.contains(NATIVE)` 为 true 就不插回，避免插回过期节点）。桩测试里引用原生分区要在 mount **之前**取——替换后 querySelector 查不到了，挂在之后取会拿到 null。
+18. **测试断言的取值时机跟挂载方式耦合**：`report()` 在替换完成后调用 `deskAnchor()` 只会返回 fallback 模式（锚点已被顶掉），断言 replace 模式必须在挂载前捕获。
 
 ---
 
 ## 已验证 / 未验证
 
-**已验证（v0.2）**：全部 JS 语法；`tools/smoke-test.js`（含专属区三套场景）28 条全过；`tools/quote-test.js` 30 条全过；`tools/options-test.js` 30 条全过（合计 88 条）；`preview.html` 五张截图（paper/gallery/pastel 浅色 + gallery/pastel 深色）逐张核对，修掉三处视觉缺陷（见关键事实 9 / 12 / 13）。
+**已验证（v0.3）**：全部 JS 语法；`tools/smoke-test.js` 37 项全过（新增：替换式挂载 5 项 + 替换式还原 2 项 + 三套空态降级 3 项 + 题签删除 1 项）；`tools/quote-test.js` 30 项全过；`tools/options-test.js` 30 项全过（合计 97 项）；`preview.html` gallery/paper 截图核对（题签删除后书脊墙独占整行、书桌头部「查看全部」链接落位正常）。
+
+**已验证（v0.2）**：`tools/smoke-test.js`（含专属区三套场景）28 条全过；`tools/quote-test.js` 30 条全过；`tools/options-test.js` 30 条全过；`preview.html` 五张截图逐张核对，修掉三处视觉缺陷（见关键事实 9 / 12 / 13）。
 
 **v0.1 基线已验证**：`tools/live-check.js` 在真实首页与阅读器注入 0 报错，书桌/功能坞正确挂载，沉浸命中 `.readerTopBar` 与 `.readerControls`，色温层生效。
 
-**未验证（需要登录后人工确认）**：v0.2 专属区与摘录管理在登录后真实页面/真浏览器的表现（竖排书名字体回退、设置页手感）；书架页 `/web/shelf`；登录后真实正文的进度百分比；Edge 实机。
+**未验证（需要登录后人工确认）**：v0.3 替换式挂载在登录态真实页面的表现（原生分区被顶掉后的落位、「查看全部」链接真实 href 与去向、「恢复原版」后原生分区复位、Vue 重渲染时序下 unmount 的健壮性）；竖排书名字体回退；书架页 `/web/shelf`；Edge 实机。
 
 ---
 

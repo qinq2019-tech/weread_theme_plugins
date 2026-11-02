@@ -5,7 +5,7 @@
  * 而是换内容气质。规格：docs/v0.2-design.md「视觉方向」§2–§8。
  *
  *   paper   → 摘句墙   便笺叠 + 纸书签   （数据：quotes[] + log[]）
- *   gallery → 墙上的书 书脊墙 + 题签     （数据：log[]）
+ *   gallery → 墙上的书 书脊墙           （数据：log[]；不再渲染题签——继续阅读全局只在书桌出现一次）
  *   pastel  → 读过的日子 35 点日历 + 轻记 （数据：stats{}）
  *
  * 关键决策：
@@ -15,7 +15,9 @@
  * 2. 与书桌的差别是「没有框」：专属区不加边框/底色/阴影/纸纹，层级靠书桌那张卡说话。
  * 3. 所有颜色走 var(--rk-*) 令牌，JS 里不写死 hex；书脊的宽高与色档由书名 hash 决定，
  *    同一本书每次刷新形态不变。
- * 4. 只挂首页（书架页未登录实测过，v0.2 不在那里挂任何东西）。
+ * 4. 空态降级（2026-11-02 起）：数据不足（在读 < 3 本 / 摘录为空 / 有记录的天数 < 3）
+ *    时不再撑骨架，收缩为一行轻提示——空墙半悬在页面上比一行字更像烂尾。
+ * 5. 只挂首页（书架页未登录实测过，v0.2 不在那里挂任何东西）。
  */
 (function () {
   'use strict';
@@ -125,6 +127,22 @@
     return head;
   }
 
+  // 空态降级（2026-11-02 起）：数据不足时不撑骨架，收缩为一行轻提示。
+  // 之前记录很少时书脊墙按 14 本的宽度撑开却只画一两根，看起来像烂尾。
+  function wingNote(text) {
+    var body = RK.h('div', { class: 'rk-wing-body' });
+    body.appendChild(RK.h('div', { class: 'rk-wing-note', text: text }));
+    return body;
+  }
+
+  function loggedDays(stats) {
+    var n = 0;
+    Object.keys(stats || {}).forEach(function (k) {
+      if (stats[k] && stats[k].seconds > 0) n++;
+    });
+    return n;
+  }
+
   /* ---------------- paper · 摘句墙 ---------------- */
 
   function buildSlip(q) {
@@ -186,11 +204,20 @@
   function buildPaper(settings, data) {
     var root = wingRoot('paper');
     root.appendChild(wingHead('私人书房 · 摘句', '摘句墙', '更早留下的句子，按时间从上往下。'));
+
+    var quotes = validQuotes(data.quotes);
+    var allLogs = sortedLog(data);
+
+    // 空态降级：一句摘录都没有、在读也不足 3 本 → 一行轻提示，不撑骨架
+    if (!quotes.length && allLogs.length < 3) {
+      root.appendChild(wingNote('还没留下句子。读到打动你的一句，从右下角的圆钮记下来。'));
+      return root;
+    }
+
     var body = RK.h('div', { class: 'rk-wing-body' });
     var slips = RK.h('div', { class: 'rk-slips' });
     var marks = RK.h('div', { class: 'rk-bookmarks' });
 
-    var quotes = validQuotes(data.quotes);
     var deskQuoteOn = settings.deskModules && settings.deskModules.quote !== false;
     // 书桌「最近一句」已展示最新一条：跳过它，避免同一句话在一页出现两次
     var picks = deskQuoteOn ? quotes.slice(-4, -1) : quotes.slice(-3);
@@ -207,11 +234,18 @@
       slips.appendChild(buildSlipEmpty(msg, !quotes.length));
     }
 
-    var logs = sortedLog(data).slice(0, 3);
+    // 书签只画有书的，记录不足时不再补空书签占位
+    var logs = allLogs.slice(0, 3);
     var wide = (window.innerWidth || 1280) >= 1280;
-    var markCount = wide ? 3 : 2;
+    var markCount = Math.min(wide ? 3 : 2, logs.length);
     for (var i = 0; i < markCount; i++) {
-      marks.appendChild(buildBookmark(logs[i] || null));
+      marks.appendChild(buildBookmark(logs[i]));
+    }
+    if (!markCount) {
+      marks.appendChild(RK.h('div', {
+        class: 'rk-wing-note',
+        text: '书签会插在你最近读过的书上。'
+      }));
     }
 
     body.appendChild(slips);
@@ -260,80 +294,28 @@
     return spine;
   }
 
-  function buildPlate(entry) {
-    var plate = RK.h('div', { class: 'rk-plate' });
-    plate.appendChild(RK.h('span', { class: 'rk-eyebrow', text: '最近在读' }));
-
-    if (!entry) {
-      // 空态：题签变成入口，而不是空盒
-      plate.appendChild(RK.h('div', { class: 'rk-plate-title', text: '从书架挑一本' }));
-      plate.appendChild(RK.h('a', {
-        class: 'rk-plate-link',
-        text: '书架 →',
-        attrs: { href: '/web/shelf' },
-        on: {
-          click: function (e) {
-            e.preventDefault();
-            location.href = '/web/shelf';
-          }
-        }
-      }));
-      return plate;
-    }
-
-    var longTitle = (entry.book || '').length > 14;
-    plate.appendChild(RK.h('div', { class: 'rk-plate-title', text: entry.book || '' }));
-    // 题签高度固定 168px：优先舍作者行，再舍百分比（进度条保留），绝不让题签变高
-    if (!longTitle && entry.author) {
-      plate.appendChild(RK.h('div', { class: 'rk-plate-author', text: entry.author }));
-    }
-    var pct = parseProgress(entry.progress);
-    var foot = RK.h('div', { class: 'rk-plate-foot' });
-    if (pct != null) {
-      var bar = RK.h('div', { class: 'rk-plate-progress' });
-      bar.appendChild(RK.h('i', { style: { width: Math.max(2, pct) + '%' } }));
-      foot.appendChild(bar);
-      if ((entry.book || '').length <= 20) {
-        foot.appendChild(RK.h('div', { class: 'rk-plate-pct', text: Math.round(pct) + '%' }));
-      }
-    }
-    if (entry.href) {
-      foot.appendChild(RK.h('a', {
-        class: 'rk-plate-link',
-        text: '继续读 →',
-        attrs: { href: entry.href },
-        on: {
-          click: function (e) {
-            e.preventDefault();
-            location.href = entry.href;
-          }
-        }
-      }));
-    }
-    plate.appendChild(foot);
-    return plate;
-  }
-
   function buildGallery(settings, data) {
     var root = wingRoot('gallery');
     root.appendChild(wingHead('书架画廊 · 书脊', '墙上的书'));
-    var body = RK.h('div', { class: 'rk-wing-body' });
-    var wall = RK.h('div', { class: 'rk-spine-wall' });
-    var logs = sortedLog(data).slice(0, spineCap());
 
-    if (logs.length) {
-      logs.forEach(function (entry) {
-        wall.appendChild(buildSpine(entry));
-      });
-    } else {
-      wall.appendChild(RK.h('div', {
-        class: 'rk-spine-empty',
-        text: '书架还空着。打开一本书，它会站在这里。'
-      }));
+    var logs = sortedLog(data);
+
+    // 空态降级：在读不足 3 本时书脊墙撑不起来，收缩为一行轻提示。
+    // 「最近在读」不再做题签卡片——继续阅读全局只在书桌出现一次（信息去重）。
+    if (logs.length < 3) {
+      root.appendChild(wingNote(logs.length
+        ? '墙上还只站得下 ' + logs.length + ' 本。多读几本，书脊会渐渐排满。'
+        : '书墙还空着。打开一本书，它会站在这里。'));
+      return root;
     }
 
+    var body = RK.h('div', { class: 'rk-wing-body' });
+    var wall = RK.h('div', { class: 'rk-spine-wall' });
+    logs.slice(0, spineCap()).forEach(function (entry) {
+      wall.appendChild(buildSpine(entry));
+    });
+
     body.appendChild(wall);
-    body.appendChild(buildPlate(logs[0] || null));
     root.appendChild(body);
     return root;
   }
@@ -355,8 +337,18 @@
   function buildPastel(settings, data) {
     var root = wingRoot('pastel');
     root.appendChild(wingHead('轻彩空间 · 日历', '读过的日子'));
-    var body = RK.h('div', { class: 'rk-wing-body' });
     var stats = data.stats || {};
+
+    // 空态降级：有记录的日子不足 3 天时，日历只是一片空圈，收缩为一行轻提示
+    var logged = loggedDays(stats);
+    if (logged < 3) {
+      root.appendChild(wingNote(logged
+        ? '读过的日子才亮了 ' + logged + ' 天。多来几天，这里会连成一小片。'
+        : '读几分钟，这里会亮起一个点。翻开就是开始。'));
+      return root;
+    }
+
+    var body = RK.h('div', { class: 'rk-wing-body' });
     var today = new Date();
     var todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 

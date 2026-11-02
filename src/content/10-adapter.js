@@ -30,6 +30,13 @@
       '.wr_index_page_content_wrapper',
       '.wr_index_page_wrapper'
     ],
+    /*
+     * 登录态首页的「继续阅读」分区（2026-11-02 登录页实测）：
+     * .wr_index_page_top_section_wrapper = 标题行（继续阅读 + 查看全部·N 个）+ 分类卡列表，
+     * 是该页面内容区的唯一主体。书桌用它做替换式挂载：原地顶掉这个分区，
+     * 位置与宽度自动继承，卸载时再放回去。
+     */
+    homeSection: ['.wr_index_page_top_section_wrapper'],
     homeHeader: ['.readerTopBar', '.home_page_header', '.wr_index_page_header_wrapper'],
     // 书籍封面的容器：新版 .ranking_block_book / 旧版 mini_bookInfo
     bookItem: ['.ranking_block_book', '.wr_index_page_mini_bookInfo', '.wr_index_page_category_list_content_card'],
@@ -197,15 +204,51 @@
       return firstMatch(CANDIDATES.homeContent);
     },
 
+    /*
+     * 书桌挂载锚点（2026-11-02 起）：
+     *  - replace：登录态首页命中「继续阅读」分区 → 书桌原地替换它（等宽等位，不推原生内容）
+     *  - prepend：其它首页结构 → 维持旧行为，插在内容区最前
+     * 返回 { mode, node, selector, allHref, allLabel }：
+     *  - allHref/allLabel 从分区标题行的「查看全部」链接里读出，供书桌保留该入口；
+     *    站点没给链接就不渲染（不猜 URL）。
+     */
+    deskAnchor: function () {
+      var section = firstMatch(CANDIDATES.homeSection);
+      if (section) {
+        var link = section.node.querySelector('.wr_index_page_top_section_header_action a[href]') ||
+          section.node.querySelector('a[href]');
+        var allHref = '';
+        var allLabel = '';
+        if (link) {
+          allHref = link.getAttribute('href') || '';
+          allLabel = text(link);
+        }
+        return {
+          mode: 'replace',
+          node: section.node,
+          selector: section.selector,
+          allHref: allHref,
+          allLabel: allLabel
+        };
+      }
+      var host = this.deskHost();
+      return host
+        ? { mode: 'prepend', node: host.node, selector: host.selector, allHref: '', allLabel: '' }
+        : null;
+    },
+
     report: function () {
       var page = detectPage();
       var host = this.deskHost();
+      var anchor = page === 'home' ? this.deskAnchor() : null;
       var info = page === 'reader' ? readChapterInfo() : null;
       return {
         page: page,
         url: location.pathname,
         version: RK.VERSION,
         hostSelector: host ? host.selector : null,
+        anchorMode: anchor ? anchor.mode : null,
+        anchorSelector: anchor ? anchor.selector : null,
         coverCount: coverCount(),
         readerChromeCount: immersiveTargets().length,
         canvasPresent: readerCanvasLikely(),

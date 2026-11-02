@@ -474,6 +474,14 @@ function scenarioWing() {
         ['纸书签 3 枚', wingRoot && wingRoot.querySelectorAll('.rk-bookmark').length === 3 ? 'OK' : 'FAIL']
       );
 
+      // ---- paper 空态：无摘录且在读不足 3 本，收缩为一行提示 ----
+      RK.wing.mount(s, { quotes: [], log: [], stats: {} });
+      const pEmpty = wingHost.shadowRoot.querySelector('.rk-wing');
+      rows.push(
+        ['paper 空态收缩为一行提示', pEmpty && pEmpty.querySelectorAll('.rk-slip,.rk-bookmark').length === 0 &&
+          pEmpty.querySelector('.rk-wing-note') ? 'OK' : 'FAIL']
+      );
+
       // ---- gallery 墙上的书 ----
       s = await RK.saveSettings({ theme: 'gallery' });
       RK.theme.apply(s);
@@ -484,7 +492,12 @@ function scenarioWing() {
         ['gallery 宿主复用（不新增节点）', env.document.querySelectorAll('[data-rk-wing]').length === 1 ? 'OK' : 'FAIL'],
         ['书脊 3 根 = 在读 3 本', spines.length === 3 ? 'OK' : 'FAIL'],
         ['书脊形态稳定（宽高内联）', spines[0] && /\d+px/.test(String(spines[0].style.width)) ? 'OK' : 'FAIL'],
-        ['题签命中最近在读', gRoot && gRoot.textContent.indexOf('活着') >= 0 ? 'OK' : 'FAIL']
+        ['无题签卡片（信息去重）', gRoot && !gRoot.querySelector('.rk-plate') ? 'OK' : 'FAIL'],
+        ['gallery 空态收缩为一行提示', (() => {
+          RK.wing.mount(s, { quotes: [], log: [{ book: '西西弗神话', progress: '67%', href: '/web/reader/x', at: Date.now() }], stats: {} });
+          const g = wingHost.shadowRoot.querySelector('.rk-wing');
+          return g && g.querySelectorAll('.rk-spine').length === 0 && g.querySelector('.rk-wing-note') ? 'OK' : 'FAIL';
+        })()]
       );
 
       // ---- pastel 读过的日子 ----
@@ -500,6 +513,14 @@ function scenarioWing() {
         ['今天有外圈标记', pRoot && pRoot.querySelector('.rk-cal-dot.is-today') ? 'OK' : 'FAIL'],
         ['本周合计', pRoot && pRoot.textContent.indexOf('1 小时 15 分') >= 0 ? 'OK' : 'FAIL'],
         ['连着 2 天（今天为 0 时从昨天起算的反向：今天有值）', pRoot && pRoot.textContent.indexOf('2 天') >= 0 ? 'OK' : 'FAIL']
+      );
+
+      // ---- pastel 空态：有记录的天数不足 3 天，日历不渲染 ----
+      RK.wing.mount(s, { quotes: [], log: [], stats: {} });
+      const eRoot = wingHost.shadowRoot.querySelector('.rk-wing');
+      rows.push(
+        ['pastel 空态收缩为一行提示', eRoot && eRoot.querySelectorAll('.rk-cal-dot').length === 0 &&
+          eRoot.querySelector('.rk-wing-note') ? 'OK' : 'FAIL']
       );
 
       // ---- 开关关闭：连宿主都不留 ----
@@ -525,6 +546,78 @@ function scenarioWing() {
     });
 }
 
+/* 替换式挂载（2026-11-02 起）：书桌原地顶掉登录态首页的原生「继续阅读」分区 */
+function scenarioReplace() {
+  const env = buildEnv('wr_theme_light wr_desktop wr_apple', {
+    path: '/',
+    build(doc, html, body) {
+      const wrapper = new Node('div');
+      wrapper.className = 'wr_index_page_wrapper';
+      const content = new Node('div');
+      content.className = 'wr_index_page_content_wrapper';
+      const section = new Node('div');
+      section.className = 'wr_index_page_top_section_wrapper';
+
+      const header = new Node('div');
+      header.className = 'wr_index_page_top_section_header_wrapper';
+      const action = new Node('div');
+      action.className = 'wr_index_page_top_section_header_action';
+      const link = new Node('a');
+      link.setAttribute('href', '/web/category/all');
+      link.textContent = '查看全部 · 22 个';
+      action.appendChild(link);
+      header.appendChild(action);
+
+      const contentBox = new Node('div');
+      contentBox.className = 'wr_index_page_top_section_content_wrapper';
+      const card = new Node('a');
+      card.className = 'wr_index_page_category_list_content_card';
+      card.textContent = '精品小说42563 本书籍';
+      contentBox.appendChild(card);
+
+      section.appendChild(header);
+      section.appendChild(contentBox);
+      content.appendChild(section);
+      wrapper.appendChild(content);
+      body.appendChild(wrapper);
+    }
+  });
+
+  run(env);
+  const RK = env.ctx.__RK__;
+  // 原生分区引用与锚点判断必须在挂载前取：替换后它已不在文档里
+  const section = env.document.querySelector('.wr_index_page_top_section_wrapper');
+  const content = env.document.querySelector('.wr_index_page_content_wrapper');
+  const anchorBefore = RK.adapter.deskAnchor();
+  RK.getSettings().then((s) => {
+    RK.theme.apply(s);
+    RK.desk.mount(s, { quotes: [], log: [{ book: '活着', chapter: '第一章', progress: '12%', href: '/web/reader/x', at: Date.now() }], stats: {} });
+
+    const deskHost = env.document.querySelector('[data-rk-desk]');
+    const headLink = deskHost && deskHost.shadowRoot.querySelector('.rk-desk-head-link');
+
+    results.push(['替换式挂载', [
+      ['书桌挂载', deskHost ? 'OK' : 'FAIL'],
+      ['锚点模式', anchorBefore && anchorBefore.mode === 'replace' && anchorBefore.selector === '.wr_index_page_top_section_wrapper'
+        ? 'OK（replace）' : 'FAIL（' + (anchorBefore && anchorBefore.mode) + '）'],
+      ['原生分区被顶掉', !env.document.contains(section) ? 'OK' : 'FAIL 仍在文档'],
+      ['书桌占住原生位置', deskHost && deskHost.parentNode === content ? 'OK' : 'FAIL'],
+      ['「查看全部」入口保留', headLink && headLink.getAttribute('href') === '/web/category/all' &&
+        headLink.textContent.indexOf('22') >= 0 ? 'OK' : 'FAIL']
+    ]]);
+
+    // 卸载：原生分区必须放回原位（干净还原）
+    RK.desk.unmount();
+    results.push(['替换式还原', [
+      ['书桌移除', env.document.querySelector('[data-rk-desk]') ? 'FAIL 仍存在' : 'OK 已移除'],
+      ['原生分区复位', env.document.contains(section) &&
+        section.textContent.indexOf('精品小说') >= 0 ? 'OK' : 'FAIL']
+    ]]);
+  }).catch((e) => {
+    results.push(['替换式挂载', [['异常', String(e && e.stack || e)]]]);
+  });
+}
+
 let failed = false;
 const origError = console.error;
 console.error = (...args) => {
@@ -534,6 +627,7 @@ console.error = (...args) => {
 
 try {
   scenarioHome();
+  scenarioReplace();
   scenarioWing();
   scenarioReader();
   scenarioUnknown();
